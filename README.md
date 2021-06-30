@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 分布式高并发商品秒杀系统
 
 - [介绍](#介绍)
@@ -185,3 +186,7 @@ java -jar dis-seckill-gateway/target/dis-seckill-gateway-0.0.1-SNAPSHOT.jar
 
 
 
+=======
+# dis-seckill
+基于SpringBoot+Zookeeper+Dubbo实现的分布式高并发商品秒杀系统
+>>>>>>> 07b48d0301600962494e6f70a45e11f05022ae4b
