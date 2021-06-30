@@ -74,8 +74,9 @@ public class GoodsController {
 
         // 1. 从redis缓存中取html
         String html = redisService.get(GoodsKeyPrefix.GOODS_LIST_HTML, "", String.class);
-        if (!StringUtils.isEmpty(html))
+        if (!StringUtils.isEmpty(html)) {
             return html;
+        }
 
         // 2. 如果redis中不存在该缓存，则需要手动渲染
         // 查询商品列表，用于手动渲染时将商品数据填充到页面
