@@ -50,14 +50,15 @@ public class GoodsServiceImpl implements GoodsServiceApi {
      * @return
      */
     @Override
-    public void reduceStock(long goodsId) {
+    public boolean reduceStock(long goodsId) {
       
         // SeckillGoods seckillGoods = new SeckillGoods();
         // 秒杀商品的id和商品的id是一样的
         // seckillGoods.setGoodsId(goods.getId());
 
-        goodsMapper.reduceStack(goodsId);
-        
+        int ret = goodsMapper.reduceStack(goodsId);
+        return ret > 0;
+
     }
   
 

@@ -155,11 +155,11 @@ public class AccessInterceptor extends HandlerInterceptorAdapter {
     }
 
     /**
-     * 从众多的cookie中找出指定cookiName的cookie
+     * 从众多的cookie中找出指定cookieName的cookie
      *
      * @param request
      * @param cookieName
-     * @return cookiName对应的value
+     * @return cookieName对应的value
      */
     private String getCookieValue(HttpServletRequest request, String cookieName) {
         Cookie[] cookies = request.getCookies();
