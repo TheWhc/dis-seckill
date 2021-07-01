@@ -22,4 +22,8 @@ public class UserContext {
     public static UserVo getUser() {
         return userHolder.get();
     }
+
+    public static void close() throws Exception {
+        userHolder.remove();
+    }
 }

@@ -32,12 +32,6 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
     private static Logger logger = LoggerFactory.getLogger(UserArgumentResolver.class);
 
     /**
-     * 由于需要将一个cookie对应的用户存入第三方缓存中，这里用redis，所以需要引入redis service
-     */
-    // @Reference(interfaceClass = RedisServiceApi.class)
-    // RedisServiceApi redisService;
-
-    /**
      * 当请求参数为 UserVo 时，使用这个解析器处理
      * 客户端的请求到达某个 Controller 的方法时，判断这个方法的参数是否为 UserVo，
      * 如果是，则这个 UserVo 参数对象通过下面的 resolveArgument() 方法获取，
@@ -48,7 +42,7 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
      */
     @Override
     public boolean supportsParameter(MethodParameter methodParameter) {
-        // logger.info("supportsParameter");
+        logger.info("supportsParameter");
         Class<?> parameterType = methodParameter.getParameterType();
         return parameterType == UserVo.class;
     }
@@ -68,77 +62,8 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
                                   ModelAndViewContainer modelAndViewContainer,
                                   NativeWebRequest nativeWebRequest,
                                   WebDataBinderFactory webDataBinderFactory) throws Exception {
-        return UserContext.getUser();
-        // 获取请求和响应对象
-       /*  HttpServletRequest request = nativeWebRequest.getNativeRequest(HttpServletRequest.class);
-        HttpServletResponse response = nativeWebRequest.getNativeResponse(HttpServletResponse.class);
-        logger.info(request.getRequestURL() + " resolveArgument");
-
-        // 从请求对象中获取token（token可能有两种方式从客户端返回，1：通过url的参数，2：通过set-Cookie字段）
-        String paramToken = request.getParameter(UserServiceApi.COOKIE_NAME_TOKEN);
-        String cookieToken = getCookieValue(request, UserServiceApi.COOKIE_NAME_TOKEN);
-
-        if (StringUtils.isEmpty(cookieToken) && StringUtils.isEmpty(paramToken)) {
-            return null;
-        }
-
-        // 判断是哪种方式返回的token，并由该种方式获取token（cookie）
-        String token = StringUtils.isEmpty(paramToken) ? cookieToken : paramToken;
-        if (StringUtils.isEmpty(token)) {
-            return null;
-        }
-
-        // 通过token就可以在redis中查出该token对应的用户对象
-        UserVo userVo = redisService.get(SkUserKeyPrefix.TOKEN, token, UserVo.class);
-        logger.info("获取userVo：");
-        if(userVo==null) return null;
-        logger.info("获取userVo：" + userVo.toString());
-
-        // 在有效期内从redis获取到key之后，需要将key重新设置一下，从而达到延长有效期的效果
-        if (userVo != null) {
-            addCookie(response, token, userVo);
-        }
-        return userVo; */
+        UserVo user = UserContext.getUser();
+        UserContext.close();
+        return user;
     }
-
-    // /**
-    //  * 根据cookie名获取相应的cookie值
-    //  *
-    //  * @param request
-    //  * @param cookieName
-    //  * @return
-    //  */
-    // private String getCookieValue(HttpServletRequest request, String cookieName) {
-    //     logger.info("getCookieValue");
-    //     Cookie[] cookies = request.getCookies();
-    //     // null判断，否则并发时会发生异常
-    //     if (cookies == null || cookies.length == 0) {
-    //         logger.info("cookies is null");
-    //         return null;
-    //     }
-
-    //     for (Cookie cookie : cookies) {
-    //         if (cookie.getName().equals(cookieName)) {
-    //             return cookie.getValue();
-    //         }
-    //     }
-    //     return null;
-    // }
-
-    // /**
-    //  * 将cookie存入redis，并将cookie写入到请求的响应中
-    //  *
-    //  * @param response
-    //  * @param token
-    //  * @param user
-    //  */
-    // private void addCookie(HttpServletResponse response, String token, UserVo user) {
-
-    //     redisService.set(SkUserKeyPrefix.TOKEN, token, user);
-
-    //     Cookie cookie = new Cookie(UserServiceApi.COOKIE_NAME_TOKEN, token);
-    //     cookie.setMaxAge(SkUserKeyPrefix.TOKEN.expireSeconds());
-    //     cookie.setPath("/");
-    //     response.addCookie(cookie);
-    // }
 }
