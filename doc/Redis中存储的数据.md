@@ -31,22 +31,17 @@ key: AccessKeyPrefix:access_{URI}_{phone}
 value: {count}
 expire: {@AccessLimit#seconds}
 
-# 7. redis中存储的随机秒杀地址
-key: SkKeyPrefix:skPath_{userId}_{goodsId}
-value: {path}
-expire: 1 min
-
-# 8. redis中存储的在系统加载时从db读取的商品库存数量
+# 7. redis中存储的在系统加载时从db读取的商品库存数量
 key: GoodsKeyPrefix:goodsStock_{goodsId}
 value: {stock}
 expire: 0
 
-# 9. redis中存储的订单信息
+# 8. redis中存储的订单信息
 key: OrderKeyPrefix:SK_ORDER:{userId}_{goodsId}
 value: {SeckillOrder}
 expire: 0
 
-# 10. redis中存储的商品信息
+# 9. redis中存储的商品信息
 key:  GoodsKeyPrefix:goodsInf_{goodsId}
 value: {good}
 expire: 0
