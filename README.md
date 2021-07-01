@@ -110,7 +110,7 @@ http://localhost:8082
 | [前后端交互接口定义](https://github.com/TheWhc/dis-seckill/blob/master/doc/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E6%8E%A5%E5%8F%A3%E5%AE%9A%E4%B9%89.md) |
 | [前后端交互接口逻辑实现](https://github.com/TheWhc/dis-seckill/blob/master/doc/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E6%8E%A5%E5%8F%A3%E9%80%BB%E8%BE%91%E5%AE%9E%E7%8E%B0.md)                                   |
 | [`Redis`中存储的数据](https://github.com/TheWhc/dis-seckill/blob/master/doc/Redis%E4%B8%AD%E5%AD%98%E5%82%A8%E7%9A%84%E6%95%B0%E6%8D%AE.md)                                      |
-| [使用分布式锁解决恶意用户重复注册问题]()                     |
+| [使用分布式锁解决恶意用户重复注册问题](https://github.com/TheWhc/dis-seckill/blob/master/doc/%E4%BD%BF%E7%94%A8%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E8%A7%A3%E5%86%B3%E6%81%B6%E6%84%8F%E7%94%A8%E6%88%B7%E9%87%8D%E5%A4%8D%E6%B3%A8%E5%86%8C%E9%97%AE%E9%A2%98.md)                     |
 | [拦截器`HandlerInterceptor`的使用]()                         |
 | **[`Rabbitmq`如何保证消息的可靠投递（）]()**                 |
 | **[`redis`和`mysql`如何实现双删一致性（）]()**               |
