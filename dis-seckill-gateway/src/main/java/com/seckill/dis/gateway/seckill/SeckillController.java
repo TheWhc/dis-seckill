@@ -1,6 +1,7 @@
 package com.seckill.dis.gateway.seckill;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.seckill.dis.common.api.cache.DLockApi;
 import com.seckill.dis.common.api.cache.RedisServiceApi;
 import com.seckill.dis.common.api.cache.vo.GoodsKeyPrefix;
 import com.seckill.dis.common.api.cache.vo.OrderKeyPrefix;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,6 +69,9 @@ public class SeckillController implements InitializingBean {
 
     @Reference(interfaceClass = MqProviderApi.class)
     MqProviderApi sender;
+
+    @Reference(interfaceClass = DLockApi.class)
+    private DLockApi dLock;
 
     /**
      * 用于内存标记，标记库存是否为空，从而减少对redis的访问
@@ -132,8 +137,8 @@ public class SeckillController implements InitializingBean {
     @RequestMapping(value = "{path}/doSeckill", method = RequestMethod.POST)
     @ResponseBody
     public Result<Integer> doSeckill( UserVo user,
-                                     @RequestParam("goodsId") long goodsId,
-                                     @PathVariable("path") String path) {
+                                      @RequestParam("goodsId") long goodsId,
+                                      @PathVariable("path") String path) {
 
         // 验证path是否正确
         boolean check = this.checkPath(user, goodsId, path);
@@ -178,6 +183,104 @@ public class SeckillController implements InitializingBean {
         // 排队中
         return Result.success(0);
     }
+
+    // 压测: 方案一: 不加锁, redis的decr原子操作 + 补偿机制 + mq + mysql
+   /* @RequestMapping(value = "doSeckill", method = RequestMethod.POST)
+    @ResponseBody
+    public Result<Integer> doSeckill( UserVo user,
+                                      @RequestParam("goodsId") long goodsId) {
+        // 判断是否重复秒杀
+        // 从redis中取缓存，减少数据库的访问
+        SeckillOrder order = redisService.get(OrderKeyPrefix.SK_ORDER, ":" + user.getUuid() + "_" + goodsId, SeckillOrder.class);
+        // 如果缓存中不存该数据，则从数据库中取
+        if (order == null) {
+            order = orderService.getSeckillOrderByUserIdAndGoodsId(user.getUuid(), goodsId);
+        }
+        if (order != null) {
+            return Result.error(CodeMsg.REPEATE_SECKILL);
+        }
+
+        // 通过内存标记，减少对redis的访问，秒杀未结束才继续访问redis
+        Boolean over = localOverMap.get(goodsId);
+        if (over)
+            return Result.error(CodeMsg.SECKILL_OVER);
+
+        // 预减库存，同时在库存为0时标记该商品已经结束秒杀
+        Long stock = redisService.decr(GoodsKeyPrefix.GOODS_STOCK, "" + goodsId);
+        if (stock < 0) {
+            localOverMap.put(goodsId, true);// 秒杀结束。标记该商品已经秒杀结束
+            redisService.set(GoodsKeyPrefix.GOODS_STOCK, "" +goodsId, 0);
+            return Result.error(CodeMsg.SECKILL_OVER);
+        }
+
+        // 商品有库存且用户为秒杀商品，则将秒杀请求放入MQ
+        SkMessage message = new SkMessage(user.getUuid(),goodsId);
+
+        // 放入MQ(对秒杀请求异步处理，直接返回)
+        sender.sendSkMessage(message);
+
+        // 排队中
+        return Result.success(0);
+    }
+*/
+
+
+    // 压测 方案二: redis作为分布式锁 + mq + mysql
+    /*@RequestMapping(value = "doSeckill", method = RequestMethod.POST)
+    @ResponseBody
+    public Result<Integer> doSeckill( UserVo user,
+                                      @RequestParam("goodsId") long goodsId) {
+
+        // 使用redis锁, 用uniqueValue来标记是哪个线程加的锁
+        String uniqueValue = UUIDUtil.uuid() + "-" + Thread.currentThread().getId();
+        String lockKey = "redis-lock" + user.getUuid() + ":" + goodsId;
+        Long start = System.currentTimeMillis();
+        try {
+            boolean isLock = false;
+            for (int i = 0; i < 3; i++) {
+                // 尝试3次加锁,同时设置过期时间
+                // 自定义Redis分布式锁
+                isLock =  dLock.lock(lockKey, uniqueValue, 30 * 1000);
+                if(isLock) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            // 判断是否获得锁
+            if(!isLock) {
+                return Result.error(CodeMsg.SECKILL_MUCH);
+            }
+            // 预减库存，同时在库存为0时标记该商品已经结束秒杀
+            Long stock = redisService.decr(GoodsKeyPrefix.GOODS_STOCK, "" + goodsId);
+            if (stock < 0) {
+                // 库存不足,将库存置为0
+                redisService.set(GoodsKeyPrefix.GOODS_STOCK, "" +goodsId, 0);
+                return Result.error(CodeMsg.SECKILL_OVER);
+            }
+
+            // 商品有库存且用户为秒杀商品，则将秒杀请求放入MQ
+            SkMessage message = new SkMessage(user.getUuid(),goodsId);
+
+            // 放入MQ(对秒杀请求异步处理，直接返回)
+            sender.sendSkMessage(message);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(CodeMsg.SECKILL_FAIL);
+        } finally {
+            Long end = System.currentTimeMillis();
+            Long costTime = end - start;
+            if(costTime < 30) {
+                // 锁还未超时,业务就已经处理完,需要手动释放锁
+                dLock.unlock(lockKey, uniqueValue);
+            }
+            // 否则锁已经超时,Redis会自动释放锁
+        }
+
+        return Result.success(0);
+
+    }*/
+
 
     /**
      * 用于返回用户秒杀的结果

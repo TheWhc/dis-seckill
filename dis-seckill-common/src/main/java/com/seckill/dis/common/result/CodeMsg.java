@@ -54,6 +54,8 @@ public class CodeMsg implements Serializable {
     public static CodeMsg SECKILL_PARM_ILLEGAL = new CodeMsg(500503, "秒杀请求参数异常：%s");
     public static CodeMsg SECKILL_TIME_ILLEGAL = new CodeMsg(500504, "非法请求，秒杀还没开始");
     public static CodeMsg SECKILL_DOODS_ILLEGAL = new CodeMsg(500505, "非法请求，商品ID出错");
+    public static CodeMsg SECKILL_MUCH = new CodeMsg(500506, "人也太多了，请稍后！");
+    public static CodeMsg SECKILL_SUCCESS = new CodeMsg(500506, "人也太多了，请稍后！");
 
     /**
      * 构造器定义为private是为了防止controller直接new
